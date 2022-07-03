@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/marioPipe.wav-fbe4066c928607bf26f0fafda68400b7.sample"
+
+[deps]
+
+source_file="res://sounds/marioPipe.wav"
+dest_files=[ "res://.import/marioPipe.wav-fbe4066c928607bf26f0fafda68400b7.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

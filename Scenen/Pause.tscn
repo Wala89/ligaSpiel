@@ -1,0 +1,99 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Control
+
+
+func _ready():
+	pass
+
+
+func _process(delta):
+	if G.portalPortalRoom:
+		$Portalraum.visible = true
+	pass
+
+
+func _input(event):
+	if event.is_action_pressed(\"pause\") and !G.infoActive:
+		var new_pause_state = not get_tree().paused
+		get_tree().paused = new_pause_state
+		visible = new_pause_state
+	pass
+	
+
+func _on_Resett_pressed():
+	get_tree().reload_current_scene()
+	get_tree().paused = not get_tree().paused
+	pass # Replace with function body.
+
+
+func _on_Beenden_pressed():
+	get_tree().quit()
+	pass # Replace with function body.
+
+
+func _on_Portalraum_pressed():
+	if G.portalPortalRoom:
+		get_tree().paused = not get_tree().paused
+		SceneChanger.changeScene(\"res://Scenen/Portalraum.tscn\")
+	pass # Replace with function body.
+"
+
+[node name="pause" type="CanvasLayer"]
+
+[node name="Control" type="Control" parent="."]
+pause_mode = 2
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = SubResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ColorRect" type="ColorRect" parent="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color( 0, 0, 0, 0.352941 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Menue" type="Label" parent="Control"]
+margin_left = 104.507
+margin_top = 20.9763
+margin_right = 148.507
+margin_bottom = 34.9763
+text = "Menue"
+
+[node name="Resett" type="Button" parent="Control"]
+margin_left = 83.5306
+margin_top = 53.1899
+margin_right = 174.531
+margin_bottom = 73.1899
+text = "Level Resett"
+
+[node name="Portalraum" type="Button" parent="Control"]
+visible = false
+margin_left = 70.795
+margin_top = 83.156
+margin_right = 185.795
+margin_bottom = 103.156
+text = "Zum Portalraum"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Beenden" type="Button" parent="Control"]
+margin_left = 77.1628
+margin_top = 113.497
+margin_right = 181.163
+margin_bottom = 133.497
+text = "Spiel Beenden"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="pressed" from="Control/Resett" to="Control" method="_on_Resett_pressed"]
+[connection signal="pressed" from="Control/Portalraum" to="Control" method="_on_Portalraum_pressed"]
+[connection signal="pressed" from="Control/Beenden" to="Control" method="_on_Beenden_pressed"]

@@ -1,0 +1,105 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://grafics/portal.png" type="Texture" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+export(String) var Ziel
+export(String) var trigger
+signal activateNextDoor
+
+var playerInShape = false
+var portalActivate = false
+var portalOn = false
+
+func _process(delta):
+	if playerInShape and Input.is_action_pressed(\"jump\") and portalOn:
+		teleport()
+	$Sprite2.rotate(1)
+	isAktivate()
+	pass
+	
+	
+func isAktivate():
+	if get_node(\"/root/G\").get(trigger):
+		$Sprite_off.visible = false
+		$Sprite_on.visible = true
+		portalOn = true
+	
+
+func _on_Area2D_body_entered(body):
+	if body.name == \"Spieler\":
+		playerInShape = true
+	pass
+
+
+func _on_Area2D_body_exited(body):
+	if body.name == \"Spieler\":
+		playerInShape = false
+	pass
+
+func teleport():
+	emit_signal(\"activateNextDoor\")
+	SceneChanger.changeScene(Ziel)
+	pass
+
+
+func _on_Area2D2_body_entered(body):
+	if body.name == \"Spieler\" and portalOn:
+		portalActivate = true
+		$Sprite2.visible = true
+	pass # Replace with function body.
+
+
+func _on_Area2D2_body_exited(body):
+	if body.name == \"Spieler\":
+		portalActivate = false
+		$Sprite2.visible = false
+	pass # Replace with function body.
+
+"
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 6.84787, 1.86718 )
+
+[sub_resource type="RectangleShape2D" id=3]
+extents = Vector2( 16.5984, 14.8359 )
+
+[node name="Tor" type="Node2D"]
+script = SubResource( 1 )
+
+[node name="Sprite2" type="Sprite" parent="."]
+visible = false
+position = Vector2( 0, -15 )
+texture = ExtResource( 1 )
+hframes = 3
+frame = 2
+
+[node name="Sprite_off" type="Sprite" parent="."]
+position = Vector2( 0, -16 )
+texture = ExtResource( 1 )
+hframes = 3
+
+[node name="Sprite_on" type="Sprite" parent="."]
+visible = false
+position = Vector2( 0, -16 )
+texture = ExtResource( 1 )
+hframes = 3
+frame = 1
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2( 0, -1.73239 )
+shape = SubResource( 2 )
+
+[node name="Area2D2" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D2"]
+position = Vector2( 0.249149, -15.1815 )
+shape = SubResource( 3 )
+[connection signal="body_entered" from="Area2D" to="." method="_on_Area2D_body_entered"]
+[connection signal="body_exited" from="Area2D" to="." method="_on_Area2D_body_exited"]
+[connection signal="body_entered" from="Area2D2" to="." method="_on_Area2D2_body_entered"]
+[connection signal="body_exited" from="Area2D2" to="." method="_on_Area2D2_body_exited"]

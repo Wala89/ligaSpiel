@@ -1,0 +1,182 @@
+[gd_scene load_steps=12 format=2]
+
+[ext_resource path="res://grafics/Kristall.png" type="Texture" id=1]
+[ext_resource path="res://grafics/Schield.png" type="Texture" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+
+func _ready():
+	$Sprite_Kristall/AnimationPlayer.play(\"Idle\")
+	$Sprite_Schield/AnimationPlayer.play(\"idle\")
+	pass
+	
+
+func _process(delta):
+	pass
+
+
+func _on_Area2D_Schild_body_entered(body):
+	if body.name == \"Spieler\":
+		body.getDmg(position)
+	pass # Replace with function body.
+"
+
+[sub_resource type="GDScript" id=2]
+script/source = "extends Sprite
+
+
+func _ready():
+	pass
+
+
+func _on_Area2D_Sockel_destroyAll():
+	$AnimationPlayer.play(\"Destroy\")
+	pass # Replace with function body.
+	
+
+func _on_AnimationPlayer_animation_finished(anim_name):
+	if anim_name == \"Destroy\":
+		queue_free()
+	pass # Replace with function body.
+"
+
+[sub_resource type="Animation" id=3]
+resource_name = "Destroy"
+length = 0.4
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( -0.1, 0.1, 0.3 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 1,
+"values": [ 1, 2, 3 ]
+}
+
+[sub_resource type="Animation" id=4]
+length = 4.0
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 2, 4 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 0, -16 ), Vector2( 0, -14 ), Vector2( 0, -16 ) ]
+}
+
+[sub_resource type="GDScript" id=5]
+script/source = "extends StaticBody2D
+
+signal destroyAll
+
+func _ready():
+	pass
+
+func destroyd():
+	queue_free()
+	emit_signal(\"destroyAll\")
+	pass
+"
+
+[sub_resource type="RectangleShape2D" id=6]
+extents = Vector2( 6.4703, 14.8943 )
+
+[sub_resource type="GDScript" id=7]
+script/source = "extends Sprite
+
+
+func _ready():
+	pass
+
+
+func _on_Area2D_Sockel_destroyAll():
+	queue_free()
+	pass # Replace with function body.
+"
+
+[sub_resource type="Animation" id=8]
+length = 2.0
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1, 2 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0.392157 ), Color( 1, 1, 1, 0.509804 ), Color( 1, 1, 1, 0.392157 ) ]
+}
+
+[sub_resource type="GDScript" id=9]
+script/source = "extends Area2D
+
+
+func _ready():
+	pass
+
+
+func _on_Area2D_Sockel_destroyAll():
+	queue_free()
+	pass # Replace with function body.
+"
+
+[node name="Edelstein" type="Node2D"]
+script = SubResource( 1 )
+
+[node name="Sprite_Kristall" type="Sprite" parent="."]
+position = Vector2( 0, -16 )
+texture = ExtResource( 1 )
+hframes = 5
+frame = 1
+script = SubResource( 2 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Sprite_Kristall"]
+anims/Destroy = SubResource( 3 )
+anims/Idle = SubResource( 4 )
+
+[node name="Sprite_Sockel" type="Sprite" parent="."]
+position = Vector2( 0, -16 )
+texture = ExtResource( 1 )
+hframes = 5
+
+[node name="Area2D_Sockel" type="StaticBody2D" parent="."]
+script = SubResource( 5 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D_Sockel"]
+position = Vector2( 0, -15 )
+shape = SubResource( 6 )
+
+[node name="Sprite_Schield" type="Sprite" parent="."]
+modulate = Color( 1, 1, 1, 0.424633 )
+position = Vector2( 0, -32 )
+texture = ExtResource( 2 )
+script = SubResource( 7 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Sprite_Schield"]
+anims/idle = SubResource( 8 )
+
+[node name="Area2D_Schild" type="Area2D" parent="."]
+script = SubResource( 9 )
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D_Schild"]
+position = Vector2( -14.9197, 3.8147e-06 )
+scale = Vector2( 1.21575, 1 )
+polygon = PoolVector2Array( 64.2967, -0.473484, -39.9434, 0.194698, -38.1114, -18.0687, -32.7987, -32.1004, -24.1883, -45.4639, -11.5476, -56.3774, 0.177131, -61.2773, 12.2683, -64.1727, 28.2066, -60.6091, 41.9465, -52.3683, 49.0912, -44.3502, 58.068, -31.6549, 62.4648, -17.4005 )
+[connection signal="animation_finished" from="Sprite_Kristall/AnimationPlayer" to="Sprite_Kristall" method="_on_AnimationPlayer_animation_finished"]
+[connection signal="destroyAll" from="Area2D_Sockel" to="Sprite_Kristall" method="_on_Area2D_Sockel_destroyAll"]
+[connection signal="destroyAll" from="Area2D_Sockel" to="Sprite_Schield" method="_on_Area2D_Sockel_destroyAll"]
+[connection signal="destroyAll" from="Area2D_Sockel" to="Area2D_Schild" method="_on_Area2D_Sockel_destroyAll"]
+[connection signal="body_entered" from="Area2D_Schild" to="." method="_on_Area2D_Schild_body_entered"]

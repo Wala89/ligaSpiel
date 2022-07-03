@@ -1,0 +1,154 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://grafics/Interface.png" type="Texture" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends CanvasLayer
+
+onready var herz_1 = $Volle_Herzen/Herz1
+onready var herz_2 = $Volle_Herzen/Herz2
+onready var herz_3 = $Volle_Herzen/Herz3
+
+onready var leer_herz_1 = $Leere_Herzen/Herz1
+onready var leer_herz_2 = $Leere_Herzen/Herz2
+onready var leer_herz_3 = $Leere_Herzen/Herz3
+
+var leben = 3
+
+func _process(delta):
+	if Input.is_action_just_pressed(\"LifePlus\"):
+		G.spielerLeben += 1
+		G.doubleJump = true
+		G.twister = true
+		G.fireBall = true
+	if Input.is_action_just_pressed(\"LifeMinus\"):
+		G.spielerLeben -= 1
+	
+	leben = G.spielerLeben
+	updateHerzen()
+	
+	if G.doubleJump:
+		$Upgrades/DoubleJump.visible = true
+	
+	if G.fireBall:
+		$Upgrades/Feuerball.visible = true
+		
+	if G.twister:
+		$Upgrades/Wirbel.visible = true
+	
+	pass
+
+
+# Setzt jenachdem wie die anzahl der Leben ist die Herzen im Interface
+func updateHerzen():
+	if leben == 3:
+		herz_1.visible = true
+		herz_2.visible = true
+		herz_3.visible = true
+		
+		leer_herz_1.visible = false
+		leer_herz_2.visible = false
+		leer_herz_3.visible = false
+	
+	if leben == 2:
+		herz_1.visible = true
+		herz_2.visible = true
+		herz_3.visible = false
+		
+		leer_herz_1.visible = false
+		leer_herz_2.visible = false
+		leer_herz_3.visible = true
+		
+	if leben == 1:
+		herz_1.visible = true
+		herz_2.visible = false
+		herz_3.visible = false
+		
+		leer_herz_1.visible = false
+		leer_herz_2.visible = true
+		leer_herz_3.visible = true
+		
+	if leben == 0:
+		herz_1.visible = false
+		herz_2.visible = false
+		herz_3.visible = false
+		
+		leer_herz_1.visible = true
+		leer_herz_2.visible = true
+		leer_herz_3.visible = true
+	pass
+"
+
+[node name="Interface" type="CanvasLayer" groups=[
+"InterfaceGruppe",
+]]
+script = SubResource( 1 )
+
+[node name="Volle_Herzen" type="Node" parent="."]
+
+[node name="Herz1" type="Sprite" parent="Volle_Herzen"]
+position = Vector2( 9.62362, 9.4252 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+
+[node name="Herz2" type="Sprite" parent="Volle_Herzen"]
+position = Vector2( 25.6236, 9.4252 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+
+[node name="Herz3" type="Sprite" parent="Volle_Herzen"]
+position = Vector2( 41.6236, 9.4252 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+
+[node name="Leere_Herzen" type="Node" parent="."]
+
+[node name="Herz1" type="Sprite" parent="Leere_Herzen"]
+position = Vector2( 9.62362, 9.4252 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+frame = 1
+
+[node name="Herz2" type="Sprite" parent="Leere_Herzen"]
+position = Vector2( 25.6236, 9.4252 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+frame = 1
+
+[node name="Herz3" type="Sprite" parent="Leere_Herzen"]
+position = Vector2( 41.6236, 9.4252 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+frame = 1
+
+[node name="Upgrades" type="Node" parent="."]
+
+[node name="DoubleJump" type="Sprite" parent="Upgrades"]
+visible = false
+position = Vector2( 246, 9 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+frame = 2
+
+[node name="Feuerball" type="Sprite" parent="Upgrades"]
+visible = false
+position = Vector2( 212, 9 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+frame = 4
+
+[node name="Wirbel" type="Sprite" parent="Upgrades"]
+visible = false
+position = Vector2( 229, 9 )
+texture = ExtResource( 2 )
+vframes = 8
+hframes = 8
+frame = 7

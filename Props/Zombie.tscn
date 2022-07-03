@@ -1,0 +1,140 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://grafics/Zombie.png" type="Texture" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends KinematicBody2D
+
+# Variablen --------------------------------------------------------------------
+
+const GRAVITY = 300
+const UP_VECTOR = Vector2(0,-1)
+const MOVING_SPEED = 20
+
+export(bool) var walk = true
+
+onready var sprite = $Sprite
+
+var isAlive = true
+
+var bewegung = Vector2(MOVING_SPEED,0)
+
+
+func _ready():
+	if walk:
+		$Sprite/AnimationPlayer.play(\"walk\")
+	pass
+
+# Main -------------------------------------------------------------------------
+
+func _physics_process(delta):
+	bewegung.y += GRAVITY * delta
+	
+	if is_on_floor():
+		bewegung.y = 0
+	
+	
+	
+	if walk:
+		changeDirektion()
+		move_and_slide(bewegung, UP_VECTOR)
+	pass
+
+# Methoden ---------------------------------------------------------------------
+
+func changeDirektion():
+	if is_on_wall() or rayCastColide():
+		bewegung.x *= -1
+		sprite.flip_h = !sprite.flip_h
+
+
+func rayCastColide():
+	if bewegung.x < 0:
+		$RayCast2DLeft.force_raycast_update()
+		return $RayCast2DLeft.get_collider() == null
+	else:
+		$RayCast2DRight.force_raycast_update()
+		return $RayCast2DRight.get_collider() == null
+
+# Signals ----------------------------------------------------------------------
+
+func _on_HeadArea2D_body_entered(body):
+	if body.name == \"Spieler\" and body.position.y + 10 < $Sprite.global_position.y:
+		body.onStomp()
+		queue_free()
+	pass
+
+
+func _on_BodyArea2D_body_entered(body):
+	if body.name == \"Spieler\":
+		#print(\"Spieler: \" + String(body.position.y))
+		#print(\"Gegner: \" + String($Sprite.global_position.y))
+		body.getDmg(position)
+	pass 
+"
+
+[sub_resource type="Animation" id=2]
+resource_name = "walk"
+length = 1.2
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.3, 0.6, 0.9, 1.2 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 0,
+"values": [ 0, 1, 2, 3, 4 ]
+}
+
+[sub_resource type="RectangleShape2D" id=3]
+extents = Vector2( 5.2279, 13.5089 )
+
+[sub_resource type="RectangleShape2D" id=4]
+extents = Vector2( 6.83203, 0.610506 )
+
+[sub_resource type="RectangleShape2D" id=5]
+extents = Vector2( 6.83837, 13.4147 )
+
+[node name="Zombie" type="KinematicBody2D"]
+script = SubResource( 1 )
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( -0.0014658, -16.0023 )
+texture = ExtResource( 1 )
+hframes = 5
+frame = 4
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Sprite"]
+anims/walk = SubResource( 2 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2( 0.00239849, -13.4983 )
+shape = SubResource( 3 )
+
+[node name="HeadArea2D" type="Area2D" parent="."]
+position = Vector2( -0.0014658, -0.00234222 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HeadArea2D"]
+position = Vector2( 0.0513458, -28.3435 )
+shape = SubResource( 4 )
+
+[node name="BodyArea2D" type="Area2D" parent="."]
+position = Vector2( -0.0014658, -0.00234222 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BodyArea2D"]
+position = Vector2( 0, -13.4929 )
+shape = SubResource( 5 )
+
+[node name="RayCast2DLeft" type="RayCast2D" parent="."]
+position = Vector2( -5.00147, -0.00234222 )
+cast_to = Vector2( 0, 1 )
+
+[node name="RayCast2DRight" type="RayCast2D" parent="."]
+position = Vector2( 4.99853, -0.00234222 )
+cast_to = Vector2( 0, 1 )
+[connection signal="body_entered" from="HeadArea2D" to="." method="_on_HeadArea2D_body_entered"]
+[connection signal="body_entered" from="BodyArea2D" to="." method="_on_BodyArea2D_body_entered"]

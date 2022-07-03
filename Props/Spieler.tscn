@@ -1,0 +1,437 @@
+[gd_scene load_steps=21 format=2]
+
+[ext_resource path="res://grafics/Spieler.png" type="Texture" id=1]
+[ext_resource path="res://sounds/fart.wav" type="AudioStream" id=2]
+[ext_resource path="res://sounds/sprungt.wav" type="AudioStream" id=3]
+[ext_resource path="res://sounds/aua.wav" type="AudioStream" id=4]
+[ext_resource path="res://Scenen/Interface.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Scenen/Pause.tscn" type="PackedScene" id=6]
+[ext_resource path="res://Fonts/Stark.otf" type="DynamicFontData" id=7]
+[ext_resource path="res://sounds/wirbel.wav" type="AudioStream" id=8]
+[ext_resource path="res://sounds/roeps.wav" type="AudioStream" id=9]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends KinematicBody2D
+
+# Variablen --------------------------------------------------------------------
+const GRAVITY = 300
+const UP_VECTOR = Vector2(0,-1)
+const MOVING_SPEED = 62
+const JUMP_SPEED = 65
+const JUMP_POWER = 120
+
+onready var fireBall = preload(\"res://Props/Feuerball.tscn\")
+
+var bewegung = Vector2(0,0)
+var doubleJump = 2
+var fireballCount = 0
+var jumpCount = 0
+var leben = 3
+var getDMG = true
+var stomp = true
+var wirbel = false
+
+var lastCheckpoint = Vector2(0,0)
+
+func _ready():
+	getDMG = true
+	stomp = true
+	G.spielerLeben = 3
+	print(\"Resett\")
+
+
+# Main -------------------------------------------------------------------------
+func _physics_process(delta):
+	leben = G.spielerLeben # Gleicht Leben ab
+	isPlayerDeath()	
+	if getDMG:
+		bewegung.x = 0 #Setzt mit jedem Frame die Bewegung X wieder auf 0
+		ceillingFloor()
+	
+	 # Lässt den Spieler mit jedem Frame schneller fallen
+	bewegung.y += GRAVITY * delta
+	
+	if getDMG:
+		checkKeyInput() # Prüft ob eine Spielereingabe vorliegt
+		
+	move_and_slide(bewegung, UP_VECTOR) # Läst den Spieler anhand des Bewegungs Vectors bewegen
+	
+	if getDMG:
+		setAnimation() # Die entsprechende Animation wird abgespielt
+		
+	fireBallCoolDown()
+	null
+
+
+# Methoden ---------------------------------------------------------------------
+func isPlayerDeath():
+	if leben <= 0:
+		get_tree().reload_current_scene()
+	pass
+
+
+func fireBallCoolDown():
+	if $Timer_Feuerball.time_left > 0:
+		$Interface/Label.text = String(int(round($Timer_Feuerball.time_left))) 
+	if $Timer_Feuerball.time_left == 0:
+		$Interface/Label.text = \"\"
+	pass
+
+
+func checkKeyInput():
+	if Input.is_action_just_pressed(\"jump\"):
+		if is_on_floor() or (doubleJump > 0 and G.doubleJump):
+			bewegung.y = -JUMP_POWER
+			doubleJump -= 1
+			jumpCount += 1
+			if doubleJump > 0:
+				$Audio_sprung.play()
+	
+	if Input.is_action_pressed(\"left\"):
+		if onAir():
+			bewegung.x = -1 * JUMP_SPEED
+		else:
+			bewegung.x = -1 * MOVING_SPEED
+		
+	if Input.is_action_pressed(\"right\"):
+		if onAir():
+			bewegung.x = 1 * JUMP_SPEED
+		else:
+			bewegung.x = 1 * MOVING_SPEED
+			
+	if Input.is_action_pressed(\"Reset\"):
+		get_tree().reload_current_scene()
+	
+	if Input.is_action_just_pressed(\"Feuerball\") and G.fireBall and fireballCount < 1:
+		var feuerBall = fireBall.instance()
+		feuerBall.name = \"feuerBall\"
+		if $Sprite.flip_h:
+			feuerBall.direction = true
+		else:
+			feuerBall.direction = false
+			
+		feuerBall.position = $Position2D.global_position
+		$Audio_Roeps.play()
+		get_parent().add_child(feuerBall)
+		fireballCount += 1
+		$Timer_Feuerball.start()
+		
+		
+	if Input.is_action_just_pressed(\"Wirbel\") and G.twister:
+		$AnimationPlayer.play(\"Wirbel\")
+		$AudioWirbel.play()
+		getDMG = false
+		wirbel = true
+	pass
+
+
+# Gibt true zurück fals der Spieler in der Luft ist! 
+func onAir():
+	if is_on_floor():
+		return false
+	else:
+		return true
+	pass
+
+
+func ceillingFloor():
+	if is_on_ceiling(): # Wenn der Spieler gegen die Decke kommt
+		bewegung.y = 0
+	if is_on_floor(): # Wenn der Spieler auf dem Boden ist
+		if stomp:
+			bewegung.y = 0 # Setzt die Fallgeschwindigkeit auf 0
+				
+		doubleJump = 2 # Setzt den DoubleJump zurück wenn auf Boden
+		jumpCount = 0 # Setzt die anzahl an Sprüungen wieder auf 0
+		stomp = true
+	pass
+
+
+# Wählt zur passenden Bewegung die Animation aus
+func setAnimation():
+	if bewegung.x < 0: # Wenn der Spieler nach links geht
+		$Sprite.flip_h = true
+		if is_on_floor():
+			$AnimationPlayer.play(\"walk\")
+			
+		
+	if bewegung.x > 0: # Wenn der Spieler nach rechts geht
+		$Sprite.flip_h = false
+		if is_on_floor():
+			$AnimationPlayer.play(\"walk\")
+			
+		
+	if bewegung.x == 0 and is_on_floor():
+		$AnimationPlayer.play(\"idle\")
+	
+	if onAir():
+		if jumpCount < 2 or jumpCount > 2 and !$AnimationPlayer.current_animation == \"doppelSprung\":
+			$AnimationPlayer.play(\"jump\")
+		else:
+			if !$AnimationPlayer.current_animation == \"doppelSprung\":
+				$Audio_fart.play()
+				
+			$AnimationPlayer.play(\"doppelSprung\")
+			jumpCount += 1
+	pass
+
+
+# Checkt ob der Spieler mit einem Gegner Kollidiert ist und Schaden bekommt.
+func getDmg(body):
+	bewegung.y = -JUMP_POWER
+	if body.x < position.x:
+		#print(body.x)
+		#print(position.x)
+		bewegung.x = + (MOVING_SPEED / 2) - 10
+	else:
+		#print(body.x)
+		#print(position.x)
+		bewegung.x = - (MOVING_SPEED / 2) - 10
+			
+	getDMG = false
+	$AnimationPlayer.play(\"dmg\")
+	$Audio_aua.play()
+	degreseLive()
+	#print(leben)
+	pass
+
+
+func onStomp():
+	bewegung.y = -JUMP_POWER *0.7
+	stomp = false
+	pass
+
+func addLive():
+	G.spielerLeben += 1
+	pass
+
+
+func degreseLive():
+	G.spielerLeben -= 1
+	if G.spielerLeben < 0:
+		G.spielerLeben = 0;
+	pass
+
+
+func enterPipe():
+	print(\"enterPipe\")
+	getDMG = false
+	pass
+	
+# Signals ----------------------------------------------------------------------
+
+func _on_AnimationPlayer_animation_finished(anim_name):
+	if anim_name == \"dmg\":
+		getDMG = true
+	if anim_name == \"Wirbel\":
+		getDMG = true
+		wirbel = false
+	pass
+
+
+func _on_Timer_Feuerball_timeout():
+	fireballCount = 0
+	print(\"FireBall rdy\")
+	pass # Replace with function body.
+"
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 6.64764, 11.3583 )
+
+[sub_resource type="CircleShape2D" id=3]
+radius = 1.01671
+
+[sub_resource type="Animation" id=4]
+resource_name = "Wirbel"
+length = 0.6
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 13 ]
+}
+
+[sub_resource type="Animation" id=5]
+length = 0.8
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.2, 0.4, 0.6, 0.8 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 1,
+"values": [ true, false, true, false, true ]
+}
+
+[sub_resource type="Animation" id=6]
+length = 0.5
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.5 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ 8, 12 ]
+}
+
+[sub_resource type="Animation" id=7]
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ 0, 2 ]
+}
+
+[sub_resource type="Animation" id=8]
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 8 ]
+}
+
+[sub_resource type="Animation" id=9]
+length = 0.6
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.6 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ 3, 7 ]
+}
+
+[sub_resource type="RectangleShape2D" id=10]
+extents = Vector2( 7.05191, 11.7052 )
+
+[sub_resource type="DynamicFont" id=11]
+size = 12
+outline_size = 1
+font_data = ExtResource( 7 )
+
+[node name="Spieler" type="KinematicBody2D" groups=[
+"PlayerGroup",
+]]
+script = SubResource( 1 )
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( 0, -16 )
+texture = ExtResource( 1 )
+vframes = 4
+hframes = 8
+frame = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2( -0.0936432, -11.5539 )
+shape = SubResource( 2 )
+
+[node name="kresiColl1" type="CollisionShape2D" parent="."]
+position = Vector2( -5.806, -1.1 )
+shape = SubResource( 3 )
+
+[node name="kresiColl2" type="CollisionShape2D" parent="."]
+position = Vector2( 0.009, -1.1 )
+shape = SubResource( 3 )
+
+[node name="kresiColl3" type="CollisionShape2D" parent="."]
+position = Vector2( 5.715, -1.1 )
+shape = SubResource( 3 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+anims/Wirbel = SubResource( 4 )
+anims/dmg = SubResource( 5 )
+anims/doppelSprung = SubResource( 6 )
+anims/idle = SubResource( 7 )
+anims/jump = SubResource( 8 )
+anims/walk = SubResource( 9 )
+
+[node name="Audio_sprung" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 3 )
+volume_db = -15.0
+
+[node name="Audio_aua" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 4 )
+volume_db = -15.0
+
+[node name="Audio_fart" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 2 )
+volume_db = -10.0
+
+[node name="AudioWirbel" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 8 )
+volume_db = -10.0
+
+[node name="Audio_Roeps" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 9 )
+volume_db = -10.0
+
+[node name="HitBox" type="Area2D" parent="."]
+visible = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitBox"]
+position = Vector2( -0.0949116, -11.3621 )
+shape = SubResource( 10 )
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2( 0, -5 )
+offset = Vector2( 0, -30 )
+current = true
+
+[node name="Interface" parent="." instance=ExtResource( 5 )]
+
+[node name="Label" type="Label" parent="Interface"]
+margin_left = 207.0
+margin_top = 1.0
+margin_right = 220.0
+margin_bottom = 16.0
+custom_fonts/font = SubResource( 11 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Position2D" type="Position2D" parent="."]
+position = Vector2( 7, -14 )
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 3.0
+
+[node name="pause" parent="." instance=ExtResource( 6 )]
+
+[node name="Timer_Feuerball" type="Timer" parent="."]
+wait_time = 10.0
+one_shot = true
+[connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_AnimationPlayer_animation_finished"]
+[connection signal="timeout" from="Timer_Feuerball" to="." method="_on_Timer_Feuerball_timeout"]

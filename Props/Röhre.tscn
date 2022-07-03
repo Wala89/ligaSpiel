@@ -1,0 +1,79 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://grafics/Details2.png" type="Texture" id=1]
+[ext_resource path="res://sounds/marioPipe.wav" type="AudioStream" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+export(String) var Ziel
+
+onready var pipeSound = $AudioStreamPlayer2D
+
+var playerInShape = false
+
+func _process(delta):
+	if playerInShape and Input.is_action_pressed(\"secret\") and !pipeSound.playing:
+		teleport()
+	pass
+	
+
+# Ablauf wenn Spieler Teleportiert werden soll
+func teleport():
+	pipeSound.play()
+	$CollisionShape2D.disabled = true
+	get_tree().call_group(\"PlayerGroup\", \"enterPipe\")
+	pass
+
+
+# Spieler betritt den Bereich der Röhrer
+func _on_EingangArea2D_body_entered(body):
+	if body.name == \"Spieler\":
+		playerInShape = true
+	pass # Replace with function body.
+
+
+# Spieler verlässt den Bereich der Röhrer
+func _on_EingangArea2D_body_exited(body):
+	if body.name == \"Spieler\":
+	 playerInShape = true
+	pass # Replace with function body.
+
+
+func _on_AudioStreamPlayer2D_finished():
+	SceneChanger.changeScene(Ziel)
+	pass # Replace with function body.
+"
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 11.8025, 7.87263 )
+
+[sub_resource type="RectangleShape2D" id=3]
+extents = Vector2( 7.25563, 1.86472 )
+
+[node name="Röhre" type="KinematicBody2D"]
+script = SubResource( 1 )
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 2 )
+volume_db = -25.0
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( -2.41758, -7.98852 )
+texture = ExtResource( 1 )
+vframes = 8
+hframes = 3
+frame = 18
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2( 0.0180016, -7.89754 )
+shape = SubResource( 2 )
+
+[node name="EingangArea2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EingangArea2D"]
+position = Vector2( 0.264866, -15.1305 )
+shape = SubResource( 3 )
+[connection signal="finished" from="AudioStreamPlayer2D" to="." method="_on_AudioStreamPlayer2D_finished"]
+[connection signal="body_entered" from="EingangArea2D" to="." method="_on_EingangArea2D_body_entered"]
+[connection signal="body_exited" from="EingangArea2D" to="." method="_on_EingangArea2D_body_exited"]

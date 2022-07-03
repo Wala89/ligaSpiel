@@ -1,0 +1,79 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://grafics/feuerball.png" type="Texture" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Area2D
+
+const SPEED2 = 100
+
+var velocity = Vector2()
+var direction = false
+
+func _ready():
+	pass
+	
+	
+func _process(delta):
+	$AnimationPlayer.play(\"flug\")
+	if direction:
+		$Sprite.flip_h = true
+		velocity.x = -SPEED2 * delta
+	else:
+		$Sprite.flip_h = false
+		velocity.x = SPEED2 * delta
+	translate(velocity)
+	pass
+
+
+func _on_Feuerball_body_entered(body):
+	if body.name != \"Spieler\":
+		queue_free()
+	if body.name == \"Area2D_Sockel\":
+		body.destroyd()
+		queue_free()
+	pass # Replace with function body.
+
+
+func _on_VisibilityNotifier2D_screen_exited():
+	queue_free()
+	pass # Replace with function body.
+"
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 6.64834, 4.70455 )
+
+[sub_resource type="Animation" id=3]
+resource_name = "flug"
+length = 0.4
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.4 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ 0, 4 ]
+}
+
+[node name="Feuerball" type="Area2D"]
+script = SubResource( 1 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource( 2 )
+
+[node name="Sprite" type="Sprite" parent="."]
+texture = ExtResource( 1 )
+hframes = 5
+frame = 1
+
+[node name="VisibilityNotifier2D" type="VisibilityNotifier2D" parent="."]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+anims/flug = SubResource( 3 )
+[connection signal="body_entered" from="." to="." method="_on_Feuerball_body_entered"]
+[connection signal="screen_exited" from="VisibilityNotifier2D" to="." method="_on_VisibilityNotifier2D_screen_exited"]

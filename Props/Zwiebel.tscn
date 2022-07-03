@@ -1,0 +1,69 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://grafics/Interface.png" type="Texture" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+signal infoTextShow
+
+func _ready():
+	pass
+	
+	
+func _process(delta):
+	$AnimationPlayer.play(\"idle\")
+	pass
+
+
+func _on_Area2D_body_entered(body):
+	if body.name == \"Spieler\":
+		G.doubleJump = true
+		showText()
+		queue_free()
+	pass # Replace with function body.
+	
+	
+func showText():
+	if !G.zwiebel:
+		emit_signal(\"infoTextShow\")
+	pass
+"
+
+[sub_resource type="Animation" id=2]
+resource_name = "idle"
+length = 4.0
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1, 2, 3 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 0, 0 ), Vector2( 0, -2 ), Vector2( 0, 0 ), Vector2( 0, 2 ) ]
+}
+
+[sub_resource type="RectangleShape2D" id=3]
+extents = Vector2( 6.62641, 6.75718 )
+
+[node name="Zwiebel" type="Node2D"]
+script = SubResource( 1 )
+
+[node name="Sprite" type="Sprite" parent="."]
+texture = ExtResource( 1 )
+vframes = 8
+hframes = 8
+frame = 3
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+anims/idle = SubResource( 2 )
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource( 3 )
+[connection signal="body_entered" from="Area2D" to="." method="_on_Area2D_body_entered"]
